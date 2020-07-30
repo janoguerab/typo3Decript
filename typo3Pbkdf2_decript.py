@@ -3,36 +3,37 @@
 import sys, getopt, base64
 from passlib.hash import pbkdf2_sha256
 
+count = 0
 
 def transform(myHash):
    decode = base64.b64decode(myHash.replace(".", "+") + '==')
    return decode
    
 def decodeHash(wordList,myHash):
-   # Using readlines() 
+   # Using readlines()
+   global count 
    file1 = open(wordList, 'r') 
    Lines = file1.readlines() 
-   count = 0
    # Strips the newline character 
    myHash = myHash.split("$")
    iteration = myHash[2]
    salt = transform(myHash[3])
    passEncoded = myHash[4]
    for line in Lines:       
-      resultHash = pbkdf2_sha256.using(rounds=iteration, salt=salt).hash(line.strip()).split("$")
-      if passEncoded == resultHash[4]:
-         print("***** Password Finded: {}".format(line.strip())) 
+      resultHash = pbkdf2_sha256.using(rounds=iteration, salt=salt).hash(line.strip())
+      resultHashSplit = resultHash.split("$")
+      if passEncoded == resultHashSplit[4]:
+         print("***** Password Finded:\n{} : {}".format(line.strip(),resultHash))
+         count = count+1 
 
 
 # TODO decodeHashFile
 def decodeHashFile(wordList,myHashFile):
    file1 = open(myHashFile, 'r') 
    Lines = file1.readlines() 
-   count = 0
    # Strips the newline character 
    for line in Lines:
-      decodeHash(wordList,line.strip()) 
-      print("Line{}: {}".format(count, line.strip())) 
+      decodeHash(wordList,line.strip())  
 
 def main(argv):
    wordList = ''
@@ -59,12 +60,20 @@ def main(argv):
       elif opt in ('-f', '--file'):
          hashFile = arg
    
-
-   print 'Word List File      :[ ', wordList,' ]'
+   print ''
+   print ''
+   print '++++++++++++++++++++++++++++++++++++++++++'
+   print ''
+   print 'Word List File      [ ', wordList,' ]' 
    if myHash:
+      print 'Hash                [ ', myHash,' ]'
       decodeHash(wordList,myHash)
    if hashFile:
+      print 'Hash File           [ ', hashFile,' ]'
       decodeHashFile(wordList,hashFile)
+   print 'Decripted Hash      [ '+str(count)+ ' ]'
+   print ''
+   print '++++++++++++++++++++++++++++++++++++++++++'
 
 if __name__ == "__main__":
    main(sys.argv[1:])
